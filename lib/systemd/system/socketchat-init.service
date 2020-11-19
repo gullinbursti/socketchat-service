@@ -1,0 +1,10 @@
+[Unit]
+Description=Starting socketchat server
+After=rc-local.service
+
+[Service]
+Type=OneShot
+ExecStart=/bin/bash /usr/local/bin/server-start
+
+[Install]
+WantedBy=multi-user.target
