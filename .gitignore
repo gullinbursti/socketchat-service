@@ -3,3 +3,7 @@
 #-- OSX stuff
 .DS_Store
 ._DS_Store
+
+
+#-- tmp dir --#
+/tmp
