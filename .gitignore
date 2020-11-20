@@ -1,8 +1,12 @@
 
-
 #-- OSX stuff
 .DS_Store
 ._DS_Store
+
+
+#-- nano stuff
+**/*.save
+**/*.swp
 
 
 #-- tmp dir --#

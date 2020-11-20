@@ -1,0 +1,11 @@
+[Unit]
+Description=%i the socketchat server
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /usr/local/bin/chatctl --%i
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
