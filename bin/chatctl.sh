@@ -6,17 +6,18 @@
 epoch=$(date -u +%d%b%Y_%H%M%S | tr '[:lower:]' '[:upper:]')
 
 
-#-- default action
+#-- get localhost ip
+ip_local=$(ifconfig eth0 | grep inet | grep broadcast | awk '{print $2}')
+
+
+#-- defaults
 action=
+addr=
 
 
 #-- default connection
-hostname=localhost
+hostname=$ip_local
 port=12222
-
-
-#-- background flags to 0
-b_flg=0
 
 
 #-- -=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=- --#
@@ -27,24 +28,12 @@ while [ $# -gt 0 ]; do
     case "$1" in
         "-?"|-h|--help)
             shift
-            echo "usage: $0 [ --help | -? ] [ -t | --stop ] [[ --start | -s ] [ -restart | -r ] [ --bg | -b ] [ --host ADDR] [ --port PORT ]]"
+            echo "usage: $0 [ --help | -? ] [ stop ] [[ start ] [ restart ] [ --host ADDR] [ --port PORT ]]"
             exit 0
             ;;
-        -t|--stop)
-            action=stop
-            shift ;
-            ;;
-        -s|--start)
-            action=start
-            shift ;
-            ;;
-        -r|--restart)
-            action=restart
-            shift ;
-            ;;
-        -b|--bg)
-            b_flg=1
-            shift ;
+        start|stop|restart)
+            action=$1
+            shift
             ;;
         --host)
             hostname=$2
@@ -65,8 +54,12 @@ done
 
 
 restart() {
+    echo "restart() -->"
+    printf "pid=[%s] addr=[%s] hostname_curr=[%s] port_curr=[%s] hostname=[%s] port=[%s]\n" "$pid" "$addr" "$hostname_curr" "$port_curr" "$hostname" "$port"
+    netstat -pltn
+
     local addr_diff=""
-    [[ "$hostname" = "$homename_curr" && "$port" = "$port_curr" ]] && addr_diff=" (same)"
+    [[ "$hostname" = "$hostname_curr" && "$port" = "$port_curr" ]] && addr_diff=" (same)"
 
     if [[ -z "$pid" ]]; then
         printf "Server not running, starting now on [%s:%d]...\n" "${hostname}" $port
@@ -82,18 +75,23 @@ restart() {
 
 
 start() {
-    [[ ! -z "$pid" ]] && printf "Server already running (%d) on [%s:%d], exiting...\n" $pid $hostname_curr $port_curr ; exit 1
+    local hist_log=/var/log/socketchat/history.log
+    local err_log=/var/log/socketchat/error.log
+    [[ ! -z "$pid" ]] && printf "Server already running (%d) on [%s:%d], exiting...\n" $pid $hostname_curr $port_curr && exit 1
 
     printf "Server starting up on [%s:%d]...\n" "${hostname}" $port
-    /usr/bin/python3 /home/pi/socketchat/server.py
-#// [[ "$b_flg" -eq 1 ]] && 
+
+    cd /home/pi/socketchat
+    /usr/bin/python3 server.py 2>> $err_log >> $hist_log
 }
 
 
 
 stop() {
-    [[ -z "$pid" ]] && printf "Server not running, exiting...\n" ; exit 1;
-    printf "Stopping server (%d) on [%s:%d]..." $pid "$homename_curr" $port_curr
+    printf "pid=[%s] addr=[%s] hostname=[%s] port=[%s]\n" "$pid" "$hostname_curr" "$port_curr"
+
+    [[ -z "$pid" ]] && printf "Server not running, exiting...\n" && exit 1
+    printf "Stopping server (%d) on [%s:%d]..." $pid "$hostname_curr" $port_curr
     kill -9 $pid && echo
 }
 
@@ -103,28 +101,28 @@ stop() {
 
 
 #-- log file
-log_path=/var/log/socketchat/history.log
-echo "${log_path}"
+act_log=/var/log/socketchat/actions.log
 
 
 #-- has pid, get current addr
-pid=$(ps ax | grep python3 | grep server.py | grep -v grep | cut -d\  -f2)
+pid=$(ps ax | grep python3 | grep server.py | grep -v grep | awk '{print $1}')
 if [[ ! -z "$pid" ]]; then
-    addr=$(netstat 2> /dev/null | grep "$pid" | awk '{print $4}' | tr ':' ' ')
+    addr=$(netstat -pltn 2> /dev/null | grep "$pid" | awk '{print $4}' | tr ':' ' ')
     hostname_curr=$(echo -e $addr | cut -d\  -f1)
     port_curr=$(echo -e $addr | cut -d\  -f2)
 fi
 
 
 #-- append log w/ timestamp / action / addr / bg flag
-printf "%s %s\t[%s:%d] [b_flg=%d]\n" "${epoch}" "${action}" "${hostname}" $port $b_flg >> log
-cat log
+printf "%s %s\t[%s:%d] [b_flg=%d]\n" "${epoch}" "${action}" "${hostname}" $port $b_flg >> $act_log
+cat $act_log
 
 #-- -=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=- --#
 
 
-#-- use action value as function call
-[[ ! -z "$action" ]] && $action
+[[ "$action" = "start" ]] && start
+[[ "$action" = "restart" ]] && restart
+[[ "$action" = "stop" ]] && stop
 
 
 

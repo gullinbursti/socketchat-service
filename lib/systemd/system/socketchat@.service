@@ -1,10 +1,16 @@
 [Unit]
-Description=%i the socketchat server
+Description=the socketchat server (%i)
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=/bin/bash /usr/local/bin/chatctl --%i
+Environment=PYTHONUNBUFFERED=1
+User=pi
+StandardOutput=/var/log/socketchat/history.log
+StandardError=/var/log/socketchat/error.log
+ExecStart=/bin/bash /usr/local/bin/chatctl %i
+TimeoutSec=30
+RestartSec=3
 Restart=always
 
 [Install]
