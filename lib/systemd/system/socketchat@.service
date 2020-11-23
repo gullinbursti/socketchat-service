@@ -8,7 +8,7 @@ Environment=PYTHONUNBUFFERED=1
 User=pi
 StandardOutput=/var/log/socketchat/history.log
 StandardError=/var/log/socketchat/error.log
-ExecStart=/bin/bash /usr/local/bin/chatctl %i
+ExecStart=/bin/bash /usr/local/bin/socketchatctl %i
 TimeoutSec=30
 RestartSec=3
 Restart=always
