@@ -5,6 +5,10 @@
 #-- define utc timestamp
 epoch=$(date -u +%d%b%Y_%H%M%S | tr '[:lower:]' '[:upper:]')
 
+#-- ctl usage
+usage_msg="usage: $0 [ --help | -h ] [ stop ] [[ start ] [ restart ] [ --host ADDR] [ --port PORT ]]"
+
+
 
 #-- get localhost ip
 ip_local=$(ifconfig eth0 | grep inet | grep broadcast | awk '{print $2}')
@@ -26,9 +30,9 @@ port=12222
 #-- parse params
 while [ $# -gt 0 ]; do
     case "$1" in
-        "-?"|-h|--help)
+        -h|--help)
             shift
-            echo "usage: $0 [ --help | -? ] [ stop ] [[ start ] [ restart ] [ --host ADDR] [ --port PORT ]]"
+            echo "${usage_msg}"
             exit 0
             ;;
         start|stop|restart)
@@ -54,8 +58,8 @@ done
 
 
 restart() {
-    echo "restart() -->"
-    printf "pid=[%s] addr=[%s] hostname_curr=[%s] port_curr=[%s] hostname=[%s] port=[%s]\n" "$pid" "$addr" "$hostname_curr" "$port_curr" "$hostname" "$port"
+#    echo "restart() -->"
+#    printf "pid=[%s] addr=[%s] hostname_curr=[%s] port_curr=[%s] hostname=[%s] port=[%s]\n" "$pid" "$addr" "$hostname_curr" "$port_curr" "$hostname" "$port"
     netstat -pltn
 
     local addr_diff=""
@@ -88,7 +92,7 @@ start() {
 
 
 stop() {
-    printf "pid=[%s] addr=[%s] hostname=[%s] port=[%s]\n" "$pid" "$hostname_curr" "$port_curr"
+#    printf "pid=[%s] addr=[%s] hostname=[%s] port=[%s]\n" "$pid" "$hostname_curr" "$port_curr"
 
     [[ -z "$pid" ]] && printf "Server not running, exiting...\n" && exit 1
     printf "Stopping server (%d) on [%s:%d]..." $pid "$hostname_curr" $port_curr
@@ -113,13 +117,14 @@ if [[ ! -z "$pid" ]]; then
 fi
 
 
-#-- append log w/ timestamp / action / addr / bg flag
-printf "%s %s\t[%s:%d] [b_flg=%d]\n" "${epoch}" "${action}" "${hostname}" $port $b_flg >> $act_log
-cat $act_log
+#-- append log w/ timestamp / action / addr
+printf "%s\t%s\t[%s:%d]\n" "${epoch}" "${action}" "${hostname}" $port >> $act_log
+#cat $act_log
 
 #-- -=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=- --#
 
 
+#-- route base on action
 [[ "$action" = "start" ]] && start
 [[ "$action" = "restart" ]] && restart
 [[ "$action" = "stop" ]] && stop

@@ -1,5 +1,5 @@
 [Unit]
-Description=the socketchat server (%i)
+Description=Automating socketchat server (%i)
 After=network.target
 
 [Service]
