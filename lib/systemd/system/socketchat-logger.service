@@ -1,0 +1,13 @@
+[Unit]
+Description=Broadcasting socketchat logs on port 12221
+After=socketchat@start.service
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /usr/local/bin/socketchat-logger
+TimeoutSec=10
+RestartSec=1
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
